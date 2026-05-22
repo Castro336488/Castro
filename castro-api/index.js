@@ -1,18 +1,20 @@
 const express = require('express');
-const cors = require('cors');
 const { execSync } = require('child_process');
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
+const os = require('os');
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', '*');
+  next();
+});
 
 const BLOBS_FILE = './blobs.json';
 const SHELBY = 'npx --yes @shelby-protocol/cli';
 
-// Setup Shelby config with correct permissions
 const shelbyConfigDir = path.join(os.homedir(), '.shelby');
 const shelbyConfigFile = path.join(shelbyConfigDir, 'config.yaml');
 const shelbyLockFile = path.join(shelbyConfigDir, 'download.lock');
@@ -20,11 +22,8 @@ const shelbyLockFile = path.join(shelbyConfigDir, 'download.lock');
 if (!fs.existsSync(shelbyConfigDir)) {
   fs.mkdirSync(shelbyConfigDir, { recursive: true });
 }
-
-// Remove stuck lock file
 if (fs.existsSync(shelbyLockFile)) {
   fs.unlinkSync(shelbyLockFile);
-  console.log('Removed stuck lock file!');
 }
 
 const yaml = `contexts:
@@ -44,11 +43,8 @@ default_account: castro
 `;
 
 fs.writeFileSync(shelbyConfigFile, yaml);
-
-// Fix permissions on config file
 try {
   execSync(`chmod 600 ${shelbyConfigFile}`);
-  console.log('Shelby config created with correct permissions!');
 } catch (err) {
   console.log('Could not set permissions:', err.message);
 }
@@ -64,7 +60,7 @@ app.get('/blobs', (req, res) => {
 
 app.post('/upload', express.raw({ type: '*/*', limit: '500mb' }), (req, res) => {
   try {
-    const { name, owner } = req.query;
+    const { name, owner, txHash } = req.query;
     const safeName = name.replace(/\s+/g, '-');
     console.log('Uploading:', safeName, 'Owner:', owner);
     const blobName = `media/${Date.now()}-${safeName}`;
@@ -74,18 +70,17 @@ app.post('/upload', express.raw({ type: '*/*', limit: '500mb' }), (req, res) => 
     console.log('Shelby result:', result);
     fs.unlinkSync(tmpFile);
     const data = JSON.parse(fs.readFileSync(BLOBS_FILE));
-    data.blobs.push({ name, blobName, owner, uploadedAt: new Date().toISOString() });
+    data.blobs.push({ name, blobName, owner, txHash, uploadedAt: new Date().toISOString() });
     fs.writeFileSync(BLOBS_FILE, JSON.stringify(data));
     res.json({ success: true, blobName });
   } catch (err) {
-    console.error('Error:', err.message);
+    console.error('Upload error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
 app.get('/download', (req, res) => {
   try {
-    // Remove lock file before downloading
     if (fs.existsSync(shelbyLockFile)) {
       fs.unlinkSync(shelbyLockFile);
     }
@@ -93,11 +88,23 @@ app.get('/download', (req, res) => {
     const tmpFile = `/tmp/${Date.now()}-download`;
     console.log('Downloading:', blobName);
     execSync(`${SHELBY} download "${blobName}" "${tmpFile}" --allow-concurrent`, { encoding: 'utf8', timeout: 300000 });
-    res.setHeader('Content-Type', 'video/mp4');
-    res.setHeader('Access-Control-Allow-Origin', '*');
+
+    // Detect content type from file extension
+    const ext = blobName.split('.').pop().toLowerCase();
+    const contentTypes = {
+      mp4: 'video/mp4', mov: 'video/quicktime', avi: 'video/x-msvideo',
+      webm: 'video/webm', mkv: 'video/x-matroska',
+      jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+      gif: 'image/gif', webp: 'image/webp',
+      pdf: 'application/pdf', txt: 'text/plain'
+    };
+    const contentType = contentTypes[ext] || 'application/octet-stream';
+
+    res.setHeader('Content-Type', contentType);
     const stream = fs.createReadStream(tmpFile);
     stream.pipe(res);
-    stream.on('end', () => fs.unlinkSync(tmpFile));
+    stream.on('end', () => { try { fs.unlinkSync(tmpFile); } catch(e) {} });
+    stream.on('error', () => { try { fs.unlinkSync(tmpFile); } catch(e) {} });
   } catch (err) {
     console.error('Download error:', err.message);
     res.status(500).json({ error: err.message });
