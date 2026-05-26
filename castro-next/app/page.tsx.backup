@@ -1,0 +1,248 @@
+'use client';
+
+import { useState, useEffect } from "react";
+import { getAptosWallets } from "@aptos-labs/wallet-standard";
+
+interface Video {
+  name: string;
+  blobName: string;
+  url: string;
+  owner?: string;
+  txHash?: string;
+}
+
+const API_URL = "https://castro-api-production.up.railway.app";
+const SHELBY_CONTRACT = "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a";
+
+function ExplorerLink({ hash }: { hash: string }) {
+  const url = "https://explorer.shelby.xyz/shelbynet/account/" + hash;
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline">
+      View on Explorer
+    </a>
+  );
+}
+
+export default function Home() {
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState("");
+  const [playing, setPlaying] = useState<string | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [account, setAccount] = useState<string | null>(null);
+  const [wallet, setWallet] = useState<any>(null);
+
+  const connectWallet = async () => {
+    try {
+      const { aptosWallets } = getAptosWallets();
+      const petra = aptosWallets.find((w: any) => w.name === "Petra");
+      if (!petra) {
+        alert("Petra wallet not found! Please install it from petra.app");
+        return;
+      }
+      const connectFeature = petra.features["aptos:connect"];
+      const result = await connectFeature.connect() as any;
+      const address =
+        result?.args?.address?.toString() ||
+        result?.args?.publicKey?.toString() ||
+        result?.account?.address?.toString() ||
+        Object.values(result?.args || {})[0]?.toString() ||
+        "unknown";
+      setAccount(address);
+      setWallet(petra);
+      setMessage("✅ Wallet connected!");
+      setTimeout(() => setMessage(""), 3000);
+    } catch (err: any) {
+      setMessage("❌ Failed to connect: " + err.message);
+    }
+  };
+
+  const disconnectWallet = async () => {
+    try {
+      if (wallet) {
+        await wallet.features["aptos:disconnect"].disconnect();
+      }
+      setAccount(null);
+      setWallet(null);
+      setVideos([]);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (account) {
+      fetch(API_URL + "/blobs")
+        .then(res => res.json())
+        .then(data => {
+          const myVideos = data.blobs.filter((b: any) => b.owner === account);
+          setVideos(myVideos.map((b: any) => ({
+            name: b.name,
+            blobName: b.blobName,
+            url: "",
+            owner: b.owner,
+            txHash: b.txHash
+          })));
+        })
+        .catch(err => console.error("Failed to load blobs:", err));
+    }
+  }, [account]);
+
+  const handleUpload = async (file: File) => {
+    if (!file || !account || !wallet) return;
+    setUploading(true);
+    setMessage("Please approve transaction in your wallet...");
+
+    try {
+      const submitFeature = wallet.features["aptos:signAndSubmitTransaction"];
+      if (!submitFeature) throw new Error("Wallet does not support transactions");
+
+      const blobName = "media/" + Date.now() + "-" + file.name.replace(/\s+/g, '-');
+      const txResult = await submitFeature.signAndSubmitTransaction({
+        payload: {
+          function: SHELBY_CONTRACT + "::blob_metadata::register_blob",
+          typeArguments: [],
+          functionArguments: [blobName, String(Math.floor(Date.now() * 1000) + 2592000000000), new Uint8Array(32), "1", String(file.size), "0", "0"],
+        }
+      }) as any;
+
+      console.log("Transaction submitted:", txResult);
+      const txHash = txResult?.args?.hash || txResult?.hash;
+if (!txHash) throw new Error("Transaction was cancelled or rejected");
+setMessage("Transaction confirmed! Uploading file...");
+
+      const response = await fetch(API_URL + "/upload?name=" + file.name + "&owner=" + account + "&txHash=" + txHash, {
+        method: "POST",
+        body: file,
+      });
+      const data = await response.json();
+      if (data.success) {
+        setVideos(prev => [...prev, {
+          name: file.name,
+          blobName: data.blobName,
+          url: URL.createObjectURL(file),
+          owner: account,
+          txHash
+        }]);
+        setMessage("✅ Uploaded to Shelby!");
+      } else {
+        setMessage("❌ Upload failed. Try again.");
+      }
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      setMessage("❌ " + err.message);
+    }
+
+    setUploading(false);
+    setTimeout(() => setMessage(""), 5000);
+  };
+
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleUpload(file);
+  };
+
+  const handlePlay = async (video: Video) => {
+    if (playing === video.blobName) { setPlaying(null); return; }
+    if (video.url) { setPlaying(video.blobName); return; }
+    setMessage("Loading from Shelby...");
+    try {
+      const res = await fetch(API_URL + "/download?blobName=" + video.blobName);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setVideos(prev => prev.map(v => v.blobName === video.blobName ? { ...v, url } : v));
+      setPlaying(video.blobName);
+      setMessage("");
+    } catch (err) {
+      setMessage("❌ Failed to load video.");
+    }
+  };
+
+  const shortAddress = account ? account.slice(0, 6) + "..." + account.slice(-4) : "";
+
+  return (
+    <div className="min-h-screen bg-gray-50 font-sans">
+      <nav className="bg-white border-b border-gray-200 px-8 py-3 flex items-center justify-between sticky top-0 z-50">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">🎬</span>
+          <span className="text-xl font-bold text-gray-900">Castro</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs bg-gray-100 px-3 py-1 rounded-full text-gray-500">Powered by Shelby</span>
+          {account ? (
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-gray.900">🟢 {shortAddress}</span>
+              <button onClick={disconnectWallet} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm cursor-pointer">Disconnect</button>
+            </div>
+          ) : (
+            <button onClick={connectWallet} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer">Connect Petra Wallet</button>
+          )}
+        </div>
+      </nav>
+
+      <div className="max-w-5xl mx-auto px-6 py-8">
+        {!account && (
+          <div className="text-center py-20 bg-white rounded-2xl shadow-sm">
+            <div className="text-6xl mb-4">🔐</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Connect your wallet</h2>
+            <p className="text-gray-500 mb-6">Connect your Petra wallet to upload and view your videos</p>
+            <button onClick={connectWallet} className="bg-blue-600 text-white px-8 py-3 rounded-lg text-base font-semibold cursor-pointer">Connect Petra Wallet</button>
+          </div>
+        )}
+
+        {account && (
+          <>
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => { e.preventDefault(); setDragOver(false); const file = e.dataTransfer.files?.[0]; if (file) handleUpload(file); }}
+              onClick={() => document.getElementById("fileInput")?.click()}
+              className={"border-2 border-dashed rounded-2xl p-12 text-center mb-10 cursor-pointer transition-all " + (dragOver ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-white")}
+            >
+              <div className="text-5xl mb-3">📁</div>
+              <p className="text-lg font-semibold text-gray-900 mb-2">{uploading ? "Processing..." : "Drop your video here"}</p>
+              <p className="text-sm text-gray-500 mb-4">or click to browse files</p>
+              <input id="fileInput" type="file" accept="video/*" onChange={handleFileInput} disabled={uploading} className="hidden" />
+              <button disabled={uploading} className={"bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-semibold " + (uploading ? "opacity-50 cursor-not-allowed" : "cursor-pointer")}>
+                {uploading ? "Processing..." : "Select Video"}
+              </button>
+              {message && <p className="mt-4 text-blue-600 font-semibold">{message}</p>}
+            </div>
+
+            <h2 className="text-xl font-bold text-gray-900 mb-5">
+              {videos.length > 0 ? "Your Videos (" + videos.length + ")" : "No videos yet"}
+            </h2>
+            {videos.length === 0 && (
+              <div className="text-center py-16 text-gray-400">
+                <div className="text-6xl mb-4">🎥</div>
+                <p className="text-base">Upload your first video to get started</p>
+              </div>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {videos.map((video, index) => (
+                <div key={index} className="bg-white rounded-xl overflow-hidden shadow-sm">
+                  {playing === video.blobName && video.url ? (
+                    <video src={video.url} controls autoPlay className="w-full aspect-video object-cover" />
+                  ) : (
+                    <div onClick={() => handlePlay(video)} className="w-full aspect-video bg-gray-900 flex items-center justify-center cursor-pointer">
+                      <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center">
+                        <span className="text-xl ml-1">▶</span>
+                      </div>
+                    </div>
+                  )}
+                  <div className="p-3">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{video.name}</p>
+                    <p className="text-xs text-gray-400">Stored on Shelby Network</p>
+                    {video.txHash && video.txHash !== "unknown" && (
+                      <ExplorerLink hash={video.txHash} />
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
