@@ -73,23 +73,46 @@ export default function App() {
 
   const handleUpload = async (file: File) => {
     if (!file || !account) return;
+    
+    console.log("Wallet features:", wallet ? Object.keys(wallet.features) : "no wallet");
+    
     setUploading(true);
-    setMessage("Uploading to Shelby...");
+    setMessage("Please sign in your wallet...");
+
     try {
+      if (wallet) {
+        const signFeature = wallet.features["aptos:signMessage"];
+        if (signFeature) {
+          await signFeature.signMessage({
+            message: `Uploading ${file.name} to Castro`,
+            nonce: Date.now().toString(),
+          });
+        }
+      }
+
+      setMessage("Uploading to Shelby...");
+
       const response = await fetch(`${API_URL}/upload?name=${file.name}&owner=${account}`, {
         method: "POST",
         body: file,
       });
       const data = await response.json();
       if (data.success) {
-        setVideos(prev => [...prev, { name: file.name, blobName: data.blobName, url: URL.createObjectURL(file), owner: account }]);
+        setVideos(prev => [...prev, {
+          name: file.name,
+          blobName: data.blobName,
+          url: URL.createObjectURL(file),
+          owner: account
+        }]);
         setMessage("✅ Uploaded to Shelby!");
       } else {
         setMessage("❌ Upload failed. Try again.");
       }
-    } catch (err) {
-      setMessage("❌ Upload failed. Try again.");
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      setMessage("❌ " + err.message);
     }
+
     setUploading(false);
     setTimeout(() => setMessage(""), 3000);
   };
@@ -164,11 +187,11 @@ export default function App() {
               onClick={() => document.getElementById("fileInput")?.click()}
             >
               <div style={{ fontSize: "48px", marginBottom: "12px" }}>📁</div>
-              <p style={{ fontSize: "18px", fontWeight: "600", color: "#111", margin: "0 0 8px" }}>{uploading ? "Uploading to Shelby..." : "Drop your video here"}</p>
+              <p style={{ fontSize: "18px", fontWeight: "600", color: "#111", margin: "0 0 8px" }}>{uploading ? "Processing..." : "Drop your video here"}</p>
               <p style={{ fontSize: "14px", color: "#888", margin: "0 0 16px" }}>or click to browse files</p>
               <input id="fileInput" type="file" accept="video/*" onChange={handleFileInput} disabled={uploading} style={{ display: "none" }} />
               <button disabled={uploading} style={{ background: "#1a73e8", color: "white", border: "none", padding: "10px 24px", borderRadius: "8px", fontSize: "14px", fontWeight: "600", cursor: uploading ? "not-allowed" : "pointer", opacity: uploading ? 0.7 : 1 }}>
-                {uploading ? "Uploading..." : "Select Video"}
+                {uploading ? "Processing..." : "Select Video"}
               </button>
               {message && <p style={{ marginTop: "16px", color: "#1a73e8", fontWeight: "600" }}>{message}</p>}
             </div>

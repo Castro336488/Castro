@@ -1,0 +1,178 @@
+[
+  {
+    "blobName": "TestDataset",
+    "description": "A test AI dataset",
+    "price": "45",
+    "category": "NLP",
+    "mimeType": "text/plain",
+    "size": 31,
+    "seller": "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+    "downloads": 2,
+    "createdAt": "2026-06-06T07:52:01.890Z",
+    "buyers": [
+      "0x1234567890abcdef",
+      "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12"
+    ]
+  },
+  {
+    "blobName": "Shelby",
+    "description": "Decentralized systems ",
+    "price": "10",
+    "category": "NLP",
+    "mimeType": "image/jpeg",
+    "size": 1621469,
+    "seller": "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+    "downloads": 5,
+    "createdAt": "2026-06-10T10:24:44.950Z",
+    "buyers": [
+      "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+      "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+      "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+      "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+      "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12"
+    ]
+  },
+  {
+    "blobName": "Bounty-record",
+    "description": "A detailed record on a bounty",
+    "price": "20",
+    "category": "Tabular",
+    "mimeType": "multipart/related",
+    "size": 16175149,
+    "seller": "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+    "downloads": 0,
+    "createdAt": "2026-06-10T11:01:33.387Z"
+  },
+  {
+    "blobName": "Shelby",
+    "description": "storage system",
+    "price": "10",
+    "category": "NLP",
+    "mimeType": "image/jpeg",
+    "size": 161202,
+    "seller": "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+    "downloads": 0,
+    "createdAt": "2026-06-25T07:14:50.789Z"
+  },
+  {
+    "blobName": "Shelby",
+    "description": "storage system",
+    "price": "10",
+    "category": "NLP",
+    "mimeType": "image/jpeg",
+    "size": 161202,
+    "seller": "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+    "downloads": 0,
+    "createdAt": "2026-06-25T07:15:13.160Z"
+  },
+  {
+    "blobName": "Shelby",
+    "description": "storage system",
+    "price": "10",
+    "category": "NLP",
+    "mimeType": "image/jpeg",
+    "size": 161202,
+    "seller": "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+    "downloads": 0,
+    "createdAt": "2026-06-25T07:15:36.411Z"
+  },
+  {
+    "blobName": "Shelby",
+    "description": "storage system",
+    "price": "10",
+    "category": "NLP",
+    "mimeType": "image/jpeg",
+    "size": 161202,
+    "seller": "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+    "downloads": 0,
+    "createdAt": "2026-06-25T07:19:09.252Z"
+  },
+  {
+    "blobName": "nlp-dataset-001",
+    "description": "AI data",
+    "price": "2",
+    "category": "NLP",
+    "mimeType": "image/png",
+    "size": 24341,
+    "seller": "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+    "downloads": 0,
+    "createdAt": "2026-06-25T07:22:12.390Z"
+  },
+  {
+    "blobName": "nlp-dataset-001",
+    "description": "AI data",
+    "price": "2",
+    "category": "NLP",
+    "mimeType": "image/png",
+    "size": 24341,
+    "seller": "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+    "downloads": 0,
+    "createdAt": "2026-06-25T07:22:28.596Z"
+  },
+  {
+    "blobName": "dataset-june-1782372566",
+    "description": "Test dataset",
+    "price": "45",
+    "category": "NLP",
+    "mimeType": "text/plain",
+    "size": 31,
+    "seller": "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+    "downloads": 0,
+    "createdAt": "2026-06-25T07:29:30.614Z"
+  },
+  {
+    "blobName": "nlp-dataset-002",
+    "description": "AI Data",
+    "price": "2",
+    "category": "Vision",
+    "mimeType": "application/pdf",
+    "size": 278700,
+    "seller": "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+    "downloads": 0,
+    "createdAt": "2026-06-25T07:31:13.295Z"
+  },
+  {
+    "blobName": "test-data-v1",
+    "description": "AI data",
+    "price": "W",
+    "category": "Time series",
+    "mimeType": "image/jpeg",
+    "size": 226388,
+    "seller": "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+    "downloads": 0,
+    "createdAt": "2026-06-25T07:35:18.667Z"
+  },
+  {
+    "blobName": "dataset-june25-001.",
+    "description": "Medicaltkit",
+    "price": "10",
+    "category": "Medical",
+    "mimeType": "image/jpeg",
+    "size": 62669,
+    "seller": "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+    "downloads": 0,
+    "createdAt": "2026-06-25T08:19:09.860Z"
+  },
+  {
+    "blobName": "crypto-data-2025",
+    "description": "Crypto agent",
+    "price": "25",
+    "category": "Time series",
+    "mimeType": "image/jpeg",
+    "size": 35338,
+    "seller": "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+    "downloads": 0,
+    "createdAt": "2026-06-25T08:29:57.627Z"
+  },
+  {
+    "blobName": "ai-text-corpus-001",
+    "description": "AI text power",
+    "price": "30",
+    "category": "Audio",
+    "mimeType": "image/jpeg",
+    "size": 97554,
+    "seller": "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+    "downloads": 0,
+    "createdAt": "2026-06-25T08:34:42.509Z"
+  }
+]

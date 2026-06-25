@@ -9,7 +9,11 @@
     "build": "npm install"
   },
   "dependencies": {
+    "@aptos-labs/ts-sdk": "^6.3.1",
+    "@shelby-protocol/sdk": "^0.3.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "multer": "^2.1.1"
   }
 }
