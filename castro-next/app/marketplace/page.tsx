@@ -55,7 +55,7 @@ export default function Marketplace() {
       const petra = aptosWallets.find((w: any) => w.name === "Petra");
       if (!petra) return alert("Petra wallet not found! Please install it from petra.app");
       const result = await petra.features["aptos:connect"].connect();
-      const addressData = result?.args?.address?.data;
+      const addressData = (result as any)?.args?.address?.data;
       if (addressData) {
         const hex = "0x" + Object.values(addressData).map((b: any) => b.toString(16).padStart(2,"0")).join("");
         setAccount(hex);
