@@ -68,7 +68,7 @@ export default function Marketplace() {
 
   const disconnectWallet = async () => {
     try {
-      await disconnect();
+      setAccount(null);
     } catch (e) { 
       console.error(e);
     }
