@@ -44,7 +44,11 @@ router.post("/upload", upload.single("file"), async (req, res) => {
     res.json({ success: true, dataset });
 
   } catch (error) {
-    console.error(error);
+    console.error("Full error:", JSON.stringify(error, null, 2));
+    console.error("Error message:", error.message);
+    console.error("GEOMI_API_KEY exists:", !!process.env.GEOMI_API_KEY);
+    console.error("PRIVATE_KEY exists:", !!process.env.PRIVATE_KEY);
+    console.error("WALLET_ADDRESS:", process.env.WALLET_ADDRESS);
     res.status(500).json({ error: error.message });
   }
 });
