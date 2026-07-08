@@ -9,9 +9,11 @@ const purchaseRoute = require("./purchase"); // 👈 new
 const app = express();
 app.use(cors({ 
   origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  credentials: false
 }));
+app.options("*", cors());
 app.use(express.json());
 app.use("/api", uploadRoute);
 app.use("/api", datasetsRoute);
