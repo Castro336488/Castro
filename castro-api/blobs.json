@@ -78,6 +78,13 @@
       "owner": "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
       "txHash": "0x73439ca56f6cc23f27c4b68583afddd17fe23ba1a434b653a952d4aef1273bd2",
       "uploadedAt": "2026-07-13T08:51:14.869Z"
+    },
+    {
+      "name": "piii.jpeg",
+      "blobName": "media/1783933123058-piii.jpeg",
+      "owner": "0x3c525656e33a31e1726050ec5eeceee58ead67099cca34652faa291b56307d12",
+      "txHash": "0x12ec2054cab590d630e925628d146bb3b954c9c00c448600d87b92bdac37daff",
+      "uploadedAt": "2026-07-13T09:01:04.744Z"
     }
   ]
 }
