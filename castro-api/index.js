@@ -70,7 +70,6 @@ app.post('/upload', express.raw({ type: '*/*', limit: '500mb' }), async (req, re
       network: Network.SHELBYNET,
       apiKey: SHELBY_API_KEY,
       rpc: { apiKey: SHELBY_API_KEY },
-      indexer: { apiKey: SHELBY_API_KEY },
     });
 
     const privateKey = new Ed25519PrivateKey(process.env.SHELBY_PRIVATE_KEY);
@@ -111,7 +110,6 @@ app.get('/download', async (req, res) => {
       network: Network.SHELBYNET,
       apiKey: SHELBY_API_KEY,
       rpc: { apiKey: SHELBY_API_KEY },
-      indexer: { apiKey: SHELBY_API_KEY },
     });
 
     const data = await shelbyClient.download({ blobName });
