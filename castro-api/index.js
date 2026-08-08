@@ -13,43 +13,13 @@ app.use((req, res, next) => {
   next();
 });
 
-const SHELBY = 'npx --yes @shelby-protocol/cli';
+const SHELBY_API_KEY = process.env.SHELBY_API_KEY;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_OWNER = 'Castro336488';
 const GITHUB_REPO = 'Castro';
 const GITHUB_FILE = 'castro-api/blobs.json';
 
 const octokit = new Octokit({ auth: GITHUB_TOKEN });
-
-const shelbyConfigDir = path.join(os.homedir(), '.shelby');
-const shelbyConfigFile = path.join(shelbyConfigDir, 'config.yaml');
-const shelbyLockFile = path.join(shelbyConfigDir, 'download.lock');
-
-if (!fs.existsSync(shelbyConfigDir)) {
-  fs.mkdirSync(shelbyConfigDir, { recursive: true });
-}
-if (fs.existsSync(shelbyLockFile)) {
-  fs.unlinkSync(shelbyLockFile);
-}
-
-const yaml = `contexts:
-  shelbynet:
-    aptos_network:
-      name: shelbynet
-      fullnode: https://api.shelbynet.shelby.xyz/v1
-      faucet: https://faucet.shelbynet.shelby.xyz
-    shelby_network:
-      rpc_endpoint: https://api.shelbynet.shelby.xyz/shelby
-accounts:
-  castro:
-    private_key: ed25519-priv-0xa6ee059ffe64773a657afe5b96ced246a4f470946bc7261e3712b248bc2d79c0
-    address: "0x74fd992bae661b9bf6ea4d52de5a9b5547a1fc4b137858cf1d3987e96b66b2b2"
-default_context: shelbynet
-default_account: castro
-`;
-
-fs.writeFileSync(shelbyConfigFile, yaml);
-try { execSync(`chmod 600 ${shelbyConfigFile}`); } catch (err) {}
 
 async function getBlobs() {
   try {
@@ -84,16 +54,45 @@ app.get('/blobs', async (req, res) => {
 
 app.post('/upload', express.raw({ type: '*/*', limit: '500mb' }), async (req, res) => {
   try {
-    const { name, owner, txHash } = req.query;
+    const { name, owner, txHash, blobName: clientBlobName } = req.query;
     const safeName = name.replace(/\s+/g, '-');
-    const blobName = `media/${Date.now()}-${safeName}`;
+    const blobName = clientBlobName || `media/${Date.now()}-${safeName}`;
     const tmpFile = `/tmp/${Date.now()}-${safeName}`;
+
     fs.writeFileSync(tmpFile, req.body);
-    execSync(`${SHELBY} upload "${tmpFile}" "${blobName}" -e "2026-12-31"`, { encoding: 'utf8', timeout: 300000 });
+    console.log('Uploading to Shelby:', blobName);
+
+    // Upload to Shelby using SDK
+    const { ShelbyClient } = await import('@shelby-protocol/sdk/node');
+    const { Network, Account, Ed25519PrivateKey } = await import('@aptos-labs/ts-sdk');
+
+    const shelbyClient = new ShelbyClient({
+      network: Network.SHELBYNET,
+      apiKey: SHELBY_API_KEY,
+      rpc: { apiKey: SHELBY_API_KEY },
+      indexer: { apiKey: SHELBY_API_KEY },
+    });
+
+    const privateKey = new Ed25519PrivateKey(process.env.SHELBY_PRIVATE_KEY);
+    const account = Account.fromPrivateKey({ privateKey });
+
+    const fileBuffer = fs.readFileSync(tmpFile);
+    const blobData = new Uint8Array(fileBuffer);
+
+    await shelbyClient.upload({
+      blobName,
+      blobData,
+      signer: account,
+      expirationMicros: Date.now() * 1000 + 604800000000,
+    });
+
     fs.unlinkSync(tmpFile);
+    console.log('Uploaded to Shelby successfully!');
+
     const { blobs, sha } = await getBlobs();
     blobs.push({ name, blobName, owner, txHash, uploadedAt: new Date().toISOString() });
     await saveBlobs(blobs, sha);
+
     res.json({ success: true, blobName });
   } catch (err) {
     console.error('Upload error:', err.message);
@@ -101,12 +100,23 @@ app.post('/upload', express.raw({ type: '*/*', limit: '500mb' }), async (req, re
   }
 });
 
-app.get('/download', (req, res) => {
+app.get('/download', async (req, res) => {
   try {
-    if (fs.existsSync(shelbyLockFile)) fs.unlinkSync(shelbyLockFile);
     const { blobName } = req.query;
-    const tmpFile = `/tmp/${Date.now()}-download`;
-    execSync(`${SHELBY} download "${blobName}" "${tmpFile}" --allow-concurrent`, { encoding: 'utf8', timeout: 300000 });
+    console.log('Downloading from Shelby:', blobName);
+
+    const { ShelbyClient } = await import('@shelby-protocol/sdk/node');
+    const { Network } = await import('@aptos-labs/ts-sdk');
+
+    const shelbyClient = new ShelbyClient({
+      network: Network.SHELBYNET,
+      apiKey: SHELBY_API_KEY,
+      rpc: { apiKey: SHELBY_API_KEY },
+      indexer: { apiKey: SHELBY_API_KEY },
+    });
+
+    const data = await shelbyClient.download({ blobName });
+
     const ext = blobName.split('.').pop().toLowerCase();
     const contentTypes = {
       mp4: 'video/mp4', mov: 'video/quicktime', avi: 'video/x-msvideo',
@@ -116,9 +126,7 @@ app.get('/download', (req, res) => {
       pdf: 'application/pdf', txt: 'text/plain'
     };
     res.setHeader('Content-Type', contentTypes[ext] || 'application/octet-stream');
-    const stream = fs.createReadStream(tmpFile);
-    stream.pipe(res);
-    stream.on('end', () => { try { fs.unlinkSync(tmpFile); } catch(e) {} });
+    res.send(Buffer.from(data));
   } catch (err) {
     console.error('Download error:', err.message);
     res.status(500).json({ error: err.message });
@@ -126,7 +134,7 @@ app.get('/download', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-  res.json({ status: 'Castro API is running!' });
+  res.json({ status: 'Castro API running on Shelbynet!' });
 });
 
 const PORT = process.env.PORT || 4000;
