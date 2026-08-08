@@ -79,9 +79,8 @@ app.post('/upload', express.raw({ type: '*/*', limit: '500mb' }), async (req, re
     const fileBuffer = fs.readFileSync(tmpFile);
     const blobData = new Uint8Array(fileBuffer);
 
-    await shelbyClient.upload({
-      blobName,
-      blobData,
+    await shelbyClient.batchUpload({
+      blobs: [{ blobName, blobData }],
       signer: account,
       expirationMicros: Date.now() * 1000 + 604800000000,
     });
