@@ -13,7 +13,7 @@ interface Video {
   fileSize?: string;
 }
 
-const API_URL = "https://castro-api.onrender.com";
+const API_URL = "/api";
 const SHELBY_CONTRACT = "0x85fdb9a176ab8ef1d9d9c1b60d60b3924f0800ac1de1cc2085fb0b8bb4988e6a";
 
 export default function Home() {
@@ -93,9 +93,9 @@ export default function Home() {
       const blobName = "media/" + Date.now() + "-" + file.name.replace(/\s+/g, '-');
       const txResult = await submitFeature.signAndSubmitTransaction({
         payload: {
-          function: SHELBY_CONTRACT + "::blob_metadata::register_blob",
+          function: SHELBY_CONTRACT + "::blob_metadata::register_multiple_blobs",
           typeArguments: [],
-          functionArguments: [blobName, String(Math.floor(Date.now() * 1000) + 2592000000000), new Uint8Array(32), "1", String(file.size), "0", "0"],
+          functionArguments: [[blobName], null, "shelbynet-1", [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]], ["1"], [String(file.size)], "0", "0", "0"],
         }
       }) as any;
       const txHash = txResult?.args?.hash || txResult?.hash;

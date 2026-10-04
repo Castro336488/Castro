@@ -148,3 +148,5 @@ vite.config.ts.timestamp-*
 .env.*
 castro-api/.env
 castro-next/.env.local
+.vercel
+.env*.local

@@ -1,5 +1,10 @@
 {
   "name": "shelby-quickstart",
   "version": "1.0.0",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1106.0",
+    "@shelby-protocol/react": "^4.0.1",
+    "@shelby-protocol/sdk": "^0.6.0"
+  }
 }
